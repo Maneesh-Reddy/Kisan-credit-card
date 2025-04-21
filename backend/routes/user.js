@@ -1,48 +1,47 @@
+
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
 const User = require('../models/User');
 
-router.post('/register', async (req, res) => {
+// Get all farmers
+router.get('/farmers', auth, async (req, res) => {
   try {
-    const { name, mobile, email, address, role } = req.body;
-
-    const existing = await User.findOne({ mobile });
-    if (existing) return res.status(400).send('User already exists');
-
-    const user = new User({ name, mobile, email, address, role });
-    await user.save();
-    res.send('User registered');
-  } catch (err) {
-    res.status(500).send('Registration failed');
+    const farmers = await User.find({ role: 'farmer' });
+    res.json(farmers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
-router.put('/:mobile', async (req, res) => {
+// Get user profile
+router.get('/profile', auth, async (req, res) => {
   try {
-    const updated = await User.findOneAndUpdate(
-      { mobile: req.params.mobile },
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Update user profile
+router.put('/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
       req.body,
       { new: true }
     );
-    res.json(updated);
-  } catch (err) {
-    res.status(500).send('Update failed');
-  }
-});
-
-router.get('/:mobile', async (req, res) => {
-  try {
-    const user = await User.findOne({ mobile: req.params.mobile });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
     res.json(user);
-  } catch (err) {
-    res.status(500).send('User not found');
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
-
-const auth = require('../middleware/auth');
-const { updateProfile, getAllFarmers } = require('../controllers/userController');
-
-router.put('/profile', auth, updateProfile);
-router.get('/farmers', auth, getAllFarmers);
 
 module.exports = router;
