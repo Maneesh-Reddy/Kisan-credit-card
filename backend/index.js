@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb://localhost:27017/kcc')
+mongoose.connect('mongodb://0.0.0.0:27017/kcc')
   .then(() => console.log('MongoDB Connected'));
 
 app.use('/api/auth', require('./routes/auth'));
