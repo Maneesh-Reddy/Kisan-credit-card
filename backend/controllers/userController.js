@@ -1,39 +1,48 @@
 
 const User = require('../models/User');
 
-exports.getUsers = async (req, res) => {
+// Store OTPs temporarily (in production, use Redis or similar)
+const otpStore = {};
+
+exports.login = async (req, res) => {
   try {
-    const users = await User.find({ role: 'farmer' });
-    res.json(users);
-  } catch (err) {
-    res.status(500).send('Server error');
+    const { mobile, otp } = req.body;
+    
+    if (otpStore[mobile] != otp) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+
+    delete otpStore[mobile];
+    
+    const user = await User.findOne({ mobile });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-exports.getUserById = async (req, res) => {
+exports.register = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = new User(req.body);
+    await user.save();
+    res.status(201).json(user);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
     res.json(user);
-  } catch (err) {
-    res.status(500).send('Server error');
-  }
-};
-
-exports.updateUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json(user);
-  } catch (err) {
-    res.status(500).send('Server error');
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
