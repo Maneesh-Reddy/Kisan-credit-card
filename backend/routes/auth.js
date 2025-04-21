@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
+const { login, register, getProfile } = require('../controllers/userController');
+const auth = require('../middleware/auth');
 
-let otpStore = {};
+router.post('/login', login);
+router.post('/register', register);
+router.get('/profile', auth, getProfile);
 
 // ✅ Send OTP only if user exists
 router.post('/send-otp', async (req, res) => {

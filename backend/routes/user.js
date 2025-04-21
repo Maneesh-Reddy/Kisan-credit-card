@@ -39,4 +39,10 @@ router.get('/:mobile', async (req, res) => {
   }
 });
 
+const auth = require('../middleware/auth');
+const { updateProfile, getAllFarmers } = require('../controllers/userController');
+
+router.put('/profile', auth, updateProfile);
+router.get('/farmers', auth, getAllFarmers);
+
 module.exports = router;
